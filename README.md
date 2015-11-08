@@ -14,32 +14,34 @@ In this project you get:
 * Reloading enabled in build.gradle
 * A standard project structure:
 
-    <proj>
+```
+<proj>
+  |
+  +- src
       |
-      +- src
+      +- ratpack
+      |     |
+      |     +- Ratpack.groovy
+      |     +- ratpack.properties
+      |     +- public // Static assets in here
+      |          |
+      |          +- images
+      |          +- lib
+      |          +- scripts
+      |          +- styles
+      |
+      +- main
+      |   |
+      |   +- groovy
+               |
+               +- // App classes in here!
+      |
+      +- test
           |
-          +- ratpack
-          |     |
-          |     +- Ratpack.groovy
-          |     +- ratpack.properties
-          |     +- public // Static assets in here
-          |          |
-          |          +- images
-          |          +- lib
-          |          +- scripts
-          |          +- styles
-          |
-          +- main
-          |   |
-          |   +- groovy
-                   |
-                   +- // App classes in here!
-          |
-          +- test
-              |
-              +- groovy
-                   |
-                   +- // Spock tests in here!
+          +- groovy
+               |
+               +- // Spock tests in here!
+```
 
 That's it! You can start the basic app with
 
