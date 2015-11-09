@@ -12,7 +12,7 @@ class MyAsyncFilmQuoteService {
             logWithTime "Start fetching quote"
             Thread.sleep(200)
             logWithTime "Finish fetching quote"
-            "I wouldn't advise a haircut man. Hairdressers are in the employment of the government."
+            "I don't advise a haircut man. All hairdressers are in the employment of the government."
         }
     }
 
@@ -21,7 +21,7 @@ class MyAsyncFilmQuoteService {
             logWithTime "Start fetching actor"
             Thread.sleep(100)
             logWithTime "Finish fetching actor"
-            "Richard E. Grant"
+            "Ralph Brown"
         }
     }
 }

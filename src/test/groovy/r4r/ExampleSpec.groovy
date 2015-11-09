@@ -21,7 +21,7 @@ class ExampleSpec extends Specification {
         Timer.stop()
     }
 
-    void 'serial execution order'() {
+    void 'serial execution "immutable style"'() {
         expect:
             GroovyEmbeddedApp.of {
                 handlers {
@@ -42,12 +42,12 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text.contains('Richard E. Grant said "I wouldn\'t advise a haircut')
+                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
             }
 
     }
 
-    void '1st (failed) attempt at parallel execution order'() {
+    void 'serial execution "node style"'() {
         expect:
             GroovyEmbeddedApp.of {
                 handlers {
@@ -57,36 +57,26 @@ class ExampleSpec extends Specification {
                         Promise<String> promisedActor = quoteService.fetchActor()
 
                         String quote
-                        String actor
 
-                        println '1'
                         promisedQuote.then {
-                            println '2'
                             quote = it
+                        }
+
+                        promisedActor.then { actor ->
                             if (actor && quote) {
                                 ctx.response.send "$actor said \"$quote\""
                             }
                         }
-
-                        promisedActor.then {
-                            println '3'
-                            actor = it
-                            if (actor && quote) {
-                                ctx.response.send "$actor said \"$quote\""
-                            }
-                        }
-
-                        println '4'
                     }
                 }
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text.contains('Richard E. Grant said "I wouldn\'t advise a haircut')
+                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
             }
     }
 
-    void '2nd (successful) attempt at parallel execution order'() {
+    void 'concurrent execution "node style"'() {
         expect:
             GroovyEmbeddedApp.of {
                 handlers {
@@ -99,9 +89,7 @@ class ExampleSpec extends Specification {
                         String quote
                         String actor
 
-                        println '1'
                         promisedQuote.then {
-                            println '2'
                             quote = it
                             if (actor && quote) {
                                 ctx.response.send "$actor said \"$quote\""
@@ -110,25 +98,22 @@ class ExampleSpec extends Specification {
 
                         Execution.current().fork().start {
                             promisedActor.then {
-                                println '3'
                                 actor = it
                                 if (actor && quote) {
                                     ctx.response.send "$actor said \"$quote\""
                                 }
                             }
                         }
-
-                        println '4'
                     }
                 }
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text.contains('Richard E. Grant said "I wouldn\'t advise a haircut')
+                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
             }
     }
 
-    void '3rd (failed) attempt at parallel execution order using Rx'() {
+    void 'serial execution using Rx'() {
         expect:
             GroovyEmbeddedApp.of {
                 handlers {
@@ -148,19 +133,19 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text.contains('Richard E. Grant said "I wouldn\'t advise a haircut')
+                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
             }
     }
 
-    void '4th (successful) attempt at parallel execution order using Rx'() {
+    void 'concurrent execution "immutable style" with Rx'() {
         expect:
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
                         MyAsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
 
-                        Observable<String> promisedQuote = RxRatpack.bindExec(RxRatpack.observe(quoteService.fetchQuote()))
-                        Observable<String> promisedActor = RxRatpack.bindExec(RxRatpack.observe(quoteService.fetchActor()))
+                        Observable<String> promisedQuote = forkedObservable(quoteService.fetchQuote())
+                        Observable<String> promisedActor = forkedObservable(quoteService.fetchActor())
 
                         Observable.combineLatest(promisedActor, promisedQuote, { actor, quote ->
                             "$actor said \"$quote\""
@@ -172,7 +157,23 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text.contains('Richard E. Grant said "I wouldn\'t advise a haircut')
+                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
             }
     }
+
+    static <T> Observable<T> forkedObservable(Promise<T> promise) {
+        RxRatpack.bindExec(Observable.create { subscriber ->
+            Execution.fork().start {
+                promise.then { value ->
+                    try {
+                        subscriber.onNext(value)
+                        subscriber.onCompleted()
+                    } catch (e) {
+                        subscriber.onError(e)
+                    }
+                }
+            }
+        })
+    }
+
 }
