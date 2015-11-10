@@ -5,8 +5,9 @@ import ratpack.exec.Promise
 
 import static r4r.Timer.logWithTime
 
-class MyAsyncFilmQuoteService {
+class FakeAsyncFilmQuoteService implements AsyncFilmQuoteService {
 
+    @Override
     Promise<String> fetchQuote() {
         Blocking.get {
             logWithTime "Start fetching quote"
@@ -16,6 +17,7 @@ class MyAsyncFilmQuoteService {
         }
     }
 
+    @Override
     Promise<String> fetchActor() {
         Blocking.get {
             logWithTime "Start fetching actor"

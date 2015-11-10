@@ -1,14 +1,11 @@
-import com.google.common.base.Stopwatch
-import r4r.MyAsyncFilmQuoteService
-import ratpack.exec.Execution
-import ratpack.exec.Promise
+import r4r.FakeAsyncFilmQuoteService
 
 import static ratpack.groovy.Groovy.ratpack
 
 ratpack {
 
     bindings {
-        bind MyAsyncFilmQuoteService
+        bind FakeAsyncFilmQuoteService
     }
 
     handlers {

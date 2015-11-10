@@ -9,6 +9,8 @@ import spock.lang.Specification
 
 class ExampleSpec extends Specification {
 
+    AsyncFilmQuoteService quoteService = new FakeAsyncFilmQuoteService()
+
     void setupSpec() {
         RxRatpack.initialize()
     }
@@ -26,7 +28,6 @@ class ExampleSpec extends Specification {
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
-                        MyAsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
                         Promise<String> promisedQuote = quoteService.fetchQuote()
                         Promise<String> promisedActor = quoteService.fetchActor()
 
@@ -52,7 +53,6 @@ class ExampleSpec extends Specification {
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
-                        MyAsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
                         Promise<String> promisedQuote = quoteService.fetchQuote()
                         Promise<String> promisedActor = quoteService.fetchActor()
 
@@ -81,8 +81,6 @@ class ExampleSpec extends Specification {
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
-                        MyAsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
-
                         Promise<String> promisedQuote = quoteService.fetchQuote()
                         Promise<String> promisedActor = quoteService.fetchActor()
 
@@ -118,8 +116,6 @@ class ExampleSpec extends Specification {
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
-                        MyAsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
-
                         Observable<String> promisedQuote = RxRatpack.observe(quoteService.fetchQuote())
                         Observable<String> promisedActor = RxRatpack.observe(quoteService.fetchActor())
 
@@ -142,14 +138,12 @@ class ExampleSpec extends Specification {
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
-                        MyAsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
-
                         Observable<String> promisedQuote = forkedObservable(quoteService.fetchQuote())
                         Observable<String> promisedActor = forkedObservable(quoteService.fetchActor())
 
-                        Observable.combineLatest(promisedActor, promisedQuote, { actor, quote ->
+                        RxRatpack.bindExec(Observable.combineLatest(promisedActor, promisedQuote, { actor, quote ->
                             "$actor said \"$quote\""
-                        }).subscribe { attribution ->
+                        })).subscribe { attribution ->
                             ctx.response.send attribution
                         }
                     }
@@ -162,7 +156,7 @@ class ExampleSpec extends Specification {
     }
 
     static <T> Observable<T> forkedObservable(Promise<T> promise) {
-        RxRatpack.bindExec(Observable.create { subscriber ->
+        Observable.create { subscriber ->
             Execution.fork().start {
                 promise.then { value ->
                     try {
@@ -173,7 +167,7 @@ class ExampleSpec extends Specification {
                     }
                 }
             }
-        })
+        }
     }
 
 }
