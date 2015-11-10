@@ -7,6 +7,8 @@ import ratpack.rx.RxRatpack
 import rx.Observable
 import spock.lang.Specification
 
+import static ratpack.test.exec.ExecHarness.yieldSingle
+
 class ExampleSpec extends Specification {
 
     AsyncFilmQuoteService quoteService = new FakeAsyncFilmQuoteService()
@@ -168,6 +170,17 @@ class ExampleSpec extends Specification {
                 }
             }
         }
+    }
+
+    void 'unit testing with ExecHarness'() {
+        when:
+            String actor = yieldSingle {
+                new FakeAsyncFilmQuoteService().fetchActor()
+            }.valueOrThrow
+
+        then:
+            actor == 'Ralph Brown'
+
     }
 
 }
