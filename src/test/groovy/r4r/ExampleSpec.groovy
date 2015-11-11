@@ -4,10 +4,9 @@ import ratpack.exec.Execution
 import ratpack.exec.Promise
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
 import ratpack.rx.RxRatpack
+import ratpack.test.exec.ExecHarness
 import rx.Observable
 import spock.lang.Specification
-
-import static ratpack.test.exec.ExecHarness.yieldSingle
 
 class ExampleSpec extends Specification {
 
@@ -174,7 +173,7 @@ class ExampleSpec extends Specification {
 
     void 'unit testing with ExecHarness'() {
         when:
-            String actor = yieldSingle {
+            String actor = ExecHarness.yieldSingle {
                 new FakeAsyncFilmQuoteService().fetchActor()
             }.valueOrThrow
 

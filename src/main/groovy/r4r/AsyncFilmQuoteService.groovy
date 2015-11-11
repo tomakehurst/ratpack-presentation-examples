@@ -7,3 +7,4 @@ interface AsyncFilmQuoteService {
     Promise<String> fetchQuote()
     Promise<String> fetchActor()
 }
+
