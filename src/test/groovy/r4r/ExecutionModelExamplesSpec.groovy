@@ -1,14 +1,16 @@
 package r4r
 
+import ratpack.exec.Blocking
 import ratpack.exec.Execution
 import ratpack.exec.Promise
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
 import ratpack.rx.RxRatpack
-import ratpack.test.exec.ExecHarness
 import rx.Observable
 import spock.lang.Specification
 
-class ExampleSpec extends Specification {
+class ExecutionModelExamplesSpec extends Specification {
+
+    final String expectedQuoteAttribution = 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
 
     AsyncFilmQuoteService quoteService = new FakeAsyncFilmQuoteService()
 
@@ -22,6 +24,32 @@ class ExampleSpec extends Specification {
 
     void cleanup() {
         Timer.stop()
+    }
+
+    void 'execution model guarantee'() {
+        expect:
+            List<Integer> steps = []
+
+            GroovyEmbeddedApp.of {
+                handlers {
+                    get {
+                        steps.add 1
+                        Blocking.get {
+                            steps.add 2
+                            return 'some stuff'
+                        }.then { stuff ->
+                            steps.add 3
+                            render stuff
+                        }
+
+                        sleep 1000
+                        steps.add 4
+                    }
+                }
+            }.test { httpClient ->
+                httpClient.get()
+                assert steps == [1, 4, 2, 3]
+            }
     }
 
     void 'serial execution "immutable style"'() {
@@ -44,7 +72,7 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
+                assert httpClient.response.body.text == expectedQuoteAttribution
             }
 
     }
@@ -73,7 +101,7 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
+                assert httpClient.response.body.text == expectedQuoteAttribution
             }
     }
 
@@ -108,7 +136,7 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
+                assert httpClient.response.body.text == expectedQuoteAttribution
             }
     }
 
@@ -130,7 +158,7 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
+                assert httpClient.response.body.text == expectedQuoteAttribution
             }
     }
 
@@ -142,7 +170,8 @@ class ExampleSpec extends Specification {
                         Observable<String> promisedQuote = forkedObservable(quoteService.fetchQuote())
                         Observable<String> promisedActor = forkedObservable(quoteService.fetchActor())
 
-                        RxRatpack.bindExec(Observable.combineLatest(promisedActor, promisedQuote, { actor, quote ->
+                        RxRatpack.bindExec(Observable.combineLatest(
+                                promisedActor, promisedQuote, { actor, quote ->
                             "$actor said \"$quote\""
                         })).subscribe { attribution ->
                             ctx.response.send attribution
@@ -152,7 +181,7 @@ class ExampleSpec extends Specification {
             }.test { httpClient ->
                 httpClient.get('quotes')
                 assert httpClient.response.statusCode == 200
-                assert httpClient.response.body.text == 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
+                assert httpClient.response.body.text == expectedQuoteAttribution
             }
     }
 
@@ -169,17 +198,6 @@ class ExampleSpec extends Specification {
                 }
             }
         }
-    }
-
-    void 'unit testing with ExecHarness'() {
-        when:
-            String actor = ExecHarness.yieldSingle {
-                new FakeAsyncFilmQuoteService().fetchActor()
-            }.valueOrThrow
-
-        then:
-            actor == 'Ralph Brown'
-
     }
 
 }
