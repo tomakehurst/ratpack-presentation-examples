@@ -5,6 +5,7 @@ import ratpack.exec.Execution
 import ratpack.exec.Promise
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
 import ratpack.rx.RxRatpack
+import ratpack.test.exec.ExecHarness
 import rx.Observable
 import spock.lang.Specification
 
@@ -199,5 +200,40 @@ class ExecutionModelExamplesSpec extends Specification {
             }
         }
     }
+
+
+    void 'promises'() {
+        expect:
+            ExecHarness.runSingle {
+                Promise<String> promisedMessage = Blocking.get {
+                    '1...2...cough...3'
+                }
+
+                promisedMessage.map { message ->
+                    "The message was: $message"
+                }.then { text ->
+                    println text
+                }
+            }
+    }
+
+    void 'Rx'() {
+        expect:
+            ExecHarness.runSingle {
+                Promise<String> promisedMessage = Blocking.get {
+                    '1...2...cough...3'
+                }
+
+                Observable<String> observableMessage = RxRatpack.observe(promisedMessage)
+
+                observableMessage.map { message ->
+                    "The message was: $message"
+                }.subscribe { text ->
+                    println text
+                }
+            }
+    }
+
+
 
 }
