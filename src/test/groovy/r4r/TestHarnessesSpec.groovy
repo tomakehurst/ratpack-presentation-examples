@@ -1,5 +1,6 @@
 package r4r
 
+import ratpack.exec.Promise
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
 import ratpack.test.exec.ExecHarness
 import spock.lang.Specification
@@ -17,7 +18,9 @@ class TestHarnessesSpec extends Specification {
     void 'unit testing with ExecHarness'() {
         when:
             String actor = ExecHarness.yieldSingle {
-                new FakeAsyncFilmQuoteService().fetchActor()
+                Promise<String> actor =
+                        new MyAsyncFilmQuoteService().fetchActor()
+                return actor
             }.valueOrThrow
 
         then:

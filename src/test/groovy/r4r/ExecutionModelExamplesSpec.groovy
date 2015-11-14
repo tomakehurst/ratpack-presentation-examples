@@ -13,7 +13,7 @@ class ExecutionModelExamplesSpec extends Specification {
 
     final String expectedQuoteAttribution = 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
 
-    AsyncFilmQuoteService quoteService = new FakeAsyncFilmQuoteService()
+    AsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
 
     void setupSpec() {
         RxRatpack.initialize()
@@ -146,8 +146,10 @@ class ExecutionModelExamplesSpec extends Specification {
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
-                        Observable<String> promisedQuote = RxRatpack.observe(quoteService.fetchQuote())
-                        Observable<String> promisedActor = RxRatpack.observe(quoteService.fetchActor())
+                        Observable<String> promisedQuote =
+                                RxRatpack.observe(quoteService.fetchQuote())
+                        Observable<String> promisedActor =
+                                RxRatpack.observe(quoteService.fetchActor())
 
                         Observable.combineLatest(promisedActor, promisedQuote, { actor, quote ->
                             "$actor said \"$quote\""
@@ -168,8 +170,10 @@ class ExecutionModelExamplesSpec extends Specification {
             GroovyEmbeddedApp.of {
                 handlers {
                     get('quotes') { ctx ->
-                        Observable<String> promisedQuote = forkedObservable(quoteService.fetchQuote())
-                        Observable<String> promisedActor = forkedObservable(quoteService.fetchActor())
+                        Observable<String> promisedQuote =
+                                forkedObservable(quoteService.fetchQuote())
+                        Observable<String> promisedActor =
+                                forkedObservable(quoteService.fetchActor())
 
                         RxRatpack.bindExec(Observable.combineLatest(
                                 promisedActor, promisedQuote, { actor, quote ->
@@ -234,6 +238,16 @@ class ExecutionModelExamplesSpec extends Specification {
             }
     }
 
+    void 'the current Execution'() {
+        expect:
+            ExecHarness.runSingle {
+                Execution.current().add(String, 'Current execution message')
 
-
+                Blocking.get {
+                    'whatever'
+                }.then {
+                    assert Execution.current().get(String) == 'Current execution message'
+                }
+            }
+    }
 }

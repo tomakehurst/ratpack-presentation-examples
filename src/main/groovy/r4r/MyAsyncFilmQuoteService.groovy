@@ -5,7 +5,7 @@ import ratpack.exec.Promise
 
 import static r4r.Timer.logWithTime
 
-class FakeAsyncFilmQuoteService implements AsyncFilmQuoteService {
+class MyAsyncFilmQuoteService implements AsyncFilmQuoteService {
 
     @Override
     Promise<String> fetchQuote() {
