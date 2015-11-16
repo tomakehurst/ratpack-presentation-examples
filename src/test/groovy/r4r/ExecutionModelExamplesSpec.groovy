@@ -11,7 +11,7 @@ import spock.lang.Specification
 
 class ExecutionModelExamplesSpec extends Specification {
 
-    final String expectedQuoteAttribution = 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
+    private static final String expectedQuoteAttribution = 'Ralph Brown said \"I don\'t advise a haircut man. All hairdressers are in the employment of the government.\"'
 
     AsyncFilmQuoteService quoteService = new MyAsyncFilmQuoteService()
 
@@ -93,9 +93,7 @@ class ExecutionModelExamplesSpec extends Specification {
                         }
 
                         promisedActor.then { actor ->
-                            if (actor && quote) {
-                                ctx.response.send "$actor said \"$quote\""
-                            }
+                            ctx.response.send "$actor said \"$quote\""
                         }
                     }
                 }

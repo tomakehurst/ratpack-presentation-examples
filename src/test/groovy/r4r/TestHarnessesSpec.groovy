@@ -2,6 +2,7 @@ package r4r
 
 import ratpack.exec.Promise
 import ratpack.groovy.test.embed.GroovyEmbeddedApp
+import ratpack.groovy.test.handling.GroovyRequestFixture
 import ratpack.test.exec.ExecHarness
 import spock.lang.Specification
 
@@ -40,5 +41,18 @@ class TestHarnessesSpec extends Specification {
                 assert httpClient.get('hello-world').body.text == 'Greetings!'
             }
 
+    }
+
+    void 'handler testing'() {
+        given:
+            def handlerUnderTest = new SecurityCheckHandler()
+
+        when:
+            def result = GroovyRequestFixture.handle(handlerUnderTest) {
+                header 'Authentication', 'bad_password'
+            }
+
+        then:
+            result.status.code == 401
     }
 }
